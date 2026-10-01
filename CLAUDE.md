@@ -71,13 +71,15 @@
   commit and push.
 
 ## Our tool (filled in during Phase 1)
-- Team:
-- Tool name:
-- Problem:
-- Who records / who decides:
-- Table name and columns:
-- Pages: index.html = entry page; dashboard.html = dashboard
+- Team: MCL team 1 (IIM Sambalpur MDP)
+- Tool name: Coal Quality Complaint Monitor (Coal India Limited & subsidiaries)
+- Problem: See consumer complaints about coal quality (grade slippage, ash, moisture, shale, sandstone, oversize >100 mm, GCV, extraneous material) in one live dashboard.
+- Who records / who decides: Consumers / sales and quality staff record; CIL management and subsidiary quality cells decide.
+- Table name and columns: complaints (see database/01-setup.sql; not used yet). Version 1 keeps demo data in the browser.
+- Pages: index.html = entry page (Register Complaint); dashboard.html = dashboard (all views, switched by menu); admin.html = master data, data import, settings
+- Code folders: css/style.css; js/ = master-data.js (master data), logic.js (application), demo-generator.js + data-layer.js (data), integration.js (integration), ui-common.js + dashboard.js + register.js + admin.js (presentation)
 
 ## Progress Log (newest entry at the bottom)
 - Phase 0 (starter): placeholder index.html, config.js without settings and
   this CLAUDE.md. Next: Phase 1 - the table and the entry page.
+- Phase 1 (Claude, 2026-10-01): Built the whole first version on DEMO DATA (about 1,400 made-up complaints made in the browser, all marked data_source = DEMO). Entry form, dashboard with 13 menu views (KPIs, 20+ charts, filters, search, detail pop-up, CSV/Excel/PDF/print export, live simulation), admin page (master data viewer, test of the POST /api/complaints checks, settings). Complaints saved on the entry page show on the dashboard without reload. Dark/light theme, mobile layout. Tested in a browser without the database. Works: everything above. Known problems: Chart.js loads from the jsDelivr CDN (could not be tested from the build machine, so please check the charts on the live site); no map (no verified coordinates); Area/Mine/Grade lists are placeholders, not official; no login; documents record file names only. Next step: Data Keeper loads official master data; run database/01-setup.sql; connect a live adapter in js/data-layer.js.
