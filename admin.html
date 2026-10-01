@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Master Data, Import and Settings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="page">
+  <section class="card"><h2 style="font-size:1.4rem" id="adminTitle">Master Data</h2>
+    <div class="tabs" style="margin-top:8px"><a class="btn small" href="#master" data-tab="master">Master Data</a><a class="btn small" href="#import" data-tab="import">Data Import</a><a class="btn small" href="#settings" data-tab="settings">Settings</a></div></section>
+
+  <section id="tab_master" data-tab="master">
+    <div class="card"><p class="warnbox"><b>Placeholder lists.</b> The Area, Mine, Location and Grade rows are <b>demo placeholders</b>, not official CIL master data. Before real use, the Data Keeper loads the official lists (see Data Import). Nothing here is invented as "official".</p>
+      <div class="filters" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"><div><label for="mtSel">Master table</label><select id="mtSel"></select></div>
+        <div><label for="mtSub">Filter by subsidiary</label><select id="mtSub"></select></div></div>
+      <p class="note" id="mtCount"></p><div class="table-wrap" id="mtTable"></div></div>
+  </section>
+
+  <section id="tab_import" data-tab="import" hidden>
+    <div class="card"><h2>Connectors for the live release</h2>
+      <p class="hint">Only Demo Data works in version 1. Everything below shows how complaints will reach the dashboard later, without redesigning it.</p>
+      <div class="table-wrap"><table><thead><tr><th>Connector</th><th>How it works</th><th>Status</th></tr></thead><tbody id="connRows"></tbody></table></div></div>
+    <div class="card"><h2>Data flow (target design)</h2>
+      <pre>External website / form / ERP / CRM / mobile app / CSV
+        ↓
+API or Webhook      POST /api/complaints   (JSON)
+        ↓
+Backend             validate → check Subsidiary/Area/Mine/Location → make Complaint ID
+        ↓
+Complaint database  one table "complaints" (see database/01-setup.sql)
+        ↓
+Real-time event     database change feed / server-sent events
+        ↓
+Dashboard           CQ.Data adapter calls subscribe() → charts, KPIs and table refresh</pre>
+      <p class="note">Layers in this code: Presentation (<code>dashboard.js, register.js</code>) · Application (<code>logic.js</code>) · Data (<code>data-layer.js, demo-generator.js</code>) · Master data (<code>master-data.js</code>) · Integration (<code>integration.js</code>).</p></div>
+    <div class="card"><h2>Try the "POST /api/complaints" check (demo)</h2>
+      <p class="hint">Paste a JSON complaint and press the button. It goes through the same validation and saving steps the live API will use. Names or codes are accepted for subsidiary, area, mine and location. Wrong combinations are rejected.</p>
+      <textarea id="apiBody" style="min-height:260px;font-family:monospace;font-size:.85rem"></textarea>
+      <div class="filter-actions"><button class="btn primary" id="apiSend">Validate and save (demo)</button><button class="btn" id="apiReset">Reset example</button><button class="btn" id="csvTpl">Download CSV template</button></div>
+      <div id="apiOut" style="margin-top:10px"></div></div>
+    <div class="card"><h2>Rules checked on every incoming complaint</h2><ul>
+      <li>Required: complaint date, consumer, source, subsidiary, area, mine, location, site of loading, declared grade, status, priority, at least one category.</li>
+      <li>Area must belong to the subsidiary, mine to the area, location to the mine.</li>
+      <li>Dates must be real, not in the future, and in order: loading ≤ dispatch ≤ receipt ≤ complaint.</li>
+      <li>Percentages 0–100; GCV 0–9000 kcal/kg; quantities not negative; quantity complained ≤ quantity supplied.</li>
+      <li>Resolved / Closed needs a resolution date. Duplicate Complaint IDs are rejected.</li></ul></div>
+  </section>
+
+  <section id="tab_settings" data-tab="settings" hidden>
+    <div class="card"><h2>Display and thresholds</h2>
+      <div class="filters" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+        <div><label for="setTheme">Theme</label><select id="setTheme"><option value="">Follow my device</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+        <div><label for="setThr">Oversize threshold (mm)</label><input type="number" id="setThr" min="1" step="1"></div>
+        <div><label for="setRefresh">Dashboard auto-refresh (seconds)</label><input type="number" id="setRefresh" min="5" step="1"></div></div>
+      <p class="note">The oversize threshold changes the wording shown on pages (e.g. "Oversize &gt;100 mm"). Complaint categories are as entered; no automatic pass/fail is calculated.</p>
+      <div class="filter-actions"><button class="btn primary" id="setSave">Save settings</button></div></div>
+    <div class="card"><h2>Demo entries in this browser</h2><p id="myCount" class="note"></p>
+      <button class="btn" id="clearMine">Remove complaints I added in demo mode</button>
+      <p class="note">This only clears this browser's demo entries. The made-up base data is regenerated automatically.</p></div>
+    <div class="card"><h2>Planned user roles (design only — no login in version 1)</h2>
+      <p class="warnbox">Version 1 has no login, so these roles are <b>not enforced</b>. When login is added, access must be enforced by the backend (database row-level rules), never only by hiding buttons.</p>
+      <div class="table-wrap"><table><thead><tr><th>Role</th><th>Planned access</th></tr></thead><tbody>
+        <tr><td>Administrator</td><td>Full access</td></tr><tr><td>CIL Management</td><td>All subsidiaries, consolidated dashboard</td></tr>
+        <tr><td>Subsidiary User</td><td>Own subsidiary only</td></tr><tr><td>Area User</td><td>Own area only</td></tr><tr><td>Mine User</td><td>Own mine only</td></tr>
+        <tr><td>Consumer / External User</td><td>Submit a complaint and view status only</td></tr><tr><td>Analyst</td><td>Dashboard and reports</td></tr></tbody></table></div></div>
+  </section>
+</main>
+<script src="config.js"></script>
+<script src="js/master-data.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/demo-generator.js"></script>
+<script src="js/data-layer.js"></script>
+<script src="js/integration.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

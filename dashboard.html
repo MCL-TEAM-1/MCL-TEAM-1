@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coal Quality Complaint Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="page">
+<div id="dashRoot" style="display:contents">
+
+  <section class="card ctrlbar" id="ctrl">
+    <div class="grp" style="flex:1 1 260px">
+      <h2 style="font-size:1.4rem" id="viewTitle">Dashboard</h2>
+      <span id="rangeText" class="note"></span>
+    </div>
+    <div class="grp"><label for="dataMode" style="margin:0">DATA MODE</label>
+      <select id="dataMode" aria-label="Data mode">
+        <option value="demo">Demo Data</option>
+        <option value="api" disabled>External API — Coming in Live Integration</option>
+        <option value="webhook" disabled>Webhook — Coming in Live Integration</option>
+        <option value="database" disabled>Database — Coming in Live Integration</option>
+        <option value="csv" disabled>CSV Import — Coming in Live Integration</option>
+      </select></div>
+    <div class="grp"><span>Data source</span><b id="srcText">Demo (synthetic)</b><span id="srcBadge"></span></div>
+    <div class="grp"><span>Last updated</span><b id="lastUpdated">—</b></div>
+    <div class="grp"><span>Auto refresh</span><div class="row">
+      <button class="btn small" id="autoRefreshBtn">ON</button>
+      <button class="btn small primary" id="refreshBtn">Refresh Now</button></div></div>
+    <div class="grp"><span>Export (uses current filters)</span><div class="row">
+      <button class="btn small" id="exCsv">CSV</button><button class="btn small" id="exXls">Excel</button>
+      <button class="btn small" id="exPdf">PDF</button><button class="btn small" id="exPrint">Print</button></div></div>
+    <div class="grp" style="flex-basis:100%"><span>Demo tools — only for demonstration, not real complaints</span><div class="row">
+      <button class="btn small primary" id="simBtn">SIMULATE LIVE COMPLAINT</button>
+      <button class="btn small" id="autoSimBtn">AUTO LIVE SIMULATION: OFF</button>
+      <label for="simEvery" style="margin:0">New complaint every:</label>
+      <select id="simEvery"><option value="10">10 sec</option><option value="30">30 sec</option><option value="60">1 min</option><option value="300">5 min</option></select></div></div>
+  </section>
+  <div id="chartsError"></div>
+
+  <section class="live-counter" id="liveCounter" data-views="dashboard live management">
+    <div><div class="lab">LIVE COMPLAINTS RECEIVED</div><div class="big" id="lcToday">0</div><div class="lab">Today</div></div>
+    <div class="mini">
+      <div><b id="lc24">0</b><span>Last 24 hours</span></div><div><b id="lc7">0</b><span>Last 7 days</span></div>
+      <div><b id="lcMonth">0</b><span>Current month</span></div><div><b id="lcFy">0</b><span>Current financial year</span></div></div>
+  </section>
+
+  <details class="card filters-card" id="filtersCard" open>
+    <summary>Filters</summary>
+    <div class="filters">
+      <div><label for="f_range">Quick date range</label><select id="f_range"><option value="">Choose…</option><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="month">This month</option><option value="fy">This financial year</option><option value="lastfy">Last financial year</option><option value="all">All time</option></select></div>
+      <div><label for="f_fy">Financial Year</label><select id="f_fy"></select></div>
+      <div><label for="f_from">Date From</label><input type="date" id="f_from"></div>
+      <div><label for="f_to">Date To</label><input type="date" id="f_to"></div>
+      <div><label for="f_sub">Subsidiary</label><select id="f_sub"></select></div>
+      <div><label for="f_area">Area</label><select id="f_area"></select></div>
+      <div><label for="f_mine">Mine</label><select id="f_mine"></select></div>
+      <div><label for="f_loc">Location / Loading Point</label><select id="f_loc"></select></div>
+      <div><label for="f_site">Site of Loading</label><select id="f_site"></select></div>
+      <div><label for="f_grade">Declared Grade</label><select id="f_grade"></select></div>
+      <div><label for="f_cat">Complaint Category</label><select id="f_cat"></select></div>
+      <div><label for="f_status">Complaint Status</label><select id="f_status"></select></div>
+      <div><label for="f_prio">Priority</label><select id="f_prio"></select></div>
+      <div><label for="f_consumer">Consumer / Customer</label><select id="f_consumer"></select></div>
+      <div><label for="f_mode">Loading Mode</label><select id="f_mode"></select></div>
+      <div><label for="f_source">Complaint Source</label><select id="f_source"></select></div>
+    </div>
+    <div class="filter-actions"><button class="btn primary" id="applyBtn">Apply Filters</button><button class="btn" id="resetBtn">Reset Filters</button>
+      <span class="note" id="filterSummary" style="align-self:center"></span></div>
+  </details>
+
+  <section class="kpis" id="kpis" data-views="dashboard live subsidiary area mine quality grade loading trend analytics"></section>
+  <section class="kpis" id="mgmtKpis" data-views="management"></section>
+
+  <section class="grid" id="chartGrid">
+    <div class="card" id="c_subs" data-views="dashboard subsidiary management analytics"><h2>Complaints by CIL Subsidiary</h2><p class="hint">Click a bar to filter. DEMO DATA — NOT OFFICIAL STATISTICS.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+    <div class="card" id="c_cat" data-views="dashboard quality management analytics"><h2>Complaint Distribution by Quality Issue</h2><p class="hint">One complaint can have more than one issue, so shares add up across issues, not complaints. Click a segment to filter.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+
+    <div class="card" id="c_area" data-views="dashboard area analytics"><div class="card-head"><h2>Complaints by Area</h2>
+      <div class="ctl"><label for="areaTop" style="margin:0">Show</label><select id="areaTop" style="width:auto;min-height:36px"><option>10</option><option selected>15</option><option>30</option><option value="0">All</option></select></div></div>
+      <p class="hint">Shows only the Areas of the chosen subsidiary. Click a bar to filter.</p>
+      <div class="chart-box" id="areaBox"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+    <div class="card" id="c_mine" data-views="dashboard mine analytics"><div class="card-head"><h2>Top Mines by Number of Complaints</h2>
+      <div class="ctl"><label for="mineTop" style="margin:0">Show</label><select id="mineTop" style="width:auto;min-height:36px"><option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="20">Top 20</option><option value="0">All</option></select></div></div>
+      <p class="hint">Click a mine to filter the whole dashboard.</p>
+      <div class="chart-box" id="mineBox"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+
+    <div class="card" id="c_loc" data-views="mine analytics"><h2>Top Loading Points / Locations (complaint clusters)</h2><p class="hint">Top 10 locations by complaints.</p>
+      <div class="chart-box" id="locBox"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+    <div class="card" id="c_subsGroups" data-views="subsidiary management analytics"><h2>Subsidiary Comparison by Quality Issue</h2><p class="hint">Stacked: each bar shows which issues make up the complaints.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+
+    <div class="card span2" id="c_trend" data-views="dashboard trend management analytics"><div class="card-head"><h2>Coal Quality Complaint Trend</h2>
+      <div class="ctl"><label for="trendGran" style="margin:0">View</label><select id="trendGran" style="width:auto;min-height:36px"><option value="day">Daily</option><option value="week" selected>Weekly</option><option value="month">Monthly</option></select></div></div>
+      <div class="checks" id="trendSeries" style="margin-bottom:8px"></div>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+
+    <div class="card span2" id="c_grade" data-views="dashboard grade analytics"><h2>Complaints by Declared Grade</h2><p class="hint">Click a grade to filter. "Potential grade slippage" = declared grade differs from the claimed or tested grade. It is not an authorised finding.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div>
+      <div class="table-wrap" id="gradeTable"></div></div>
+
+    <div class="card" id="c_loading" data-views="dashboard loading analytics"><h2>Complaints by Site of Loading</h2>
+      <div class="chart-box" style="height:220px"><canvas></canvas><div class="nodata">No data for the current filters</div></div>
+      <div class="table-wrap" id="loadingTable"></div></div>
+    <div class="card" id="c_status" data-views="dashboard management analytics"><h2>Complaint Status Distribution</h2><p class="hint">Hover a segment to see count and percentage.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+
+    <div class="card" id="c_aging" data-views="dashboard management analytics"><h2>Open Complaint Aging</h2><p class="hint">Number of open complaints by days since the complaint date.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No open complaints</div></div></div>
+    <div class="card" id="c_res" data-views="dashboard trend management analytics"><div class="card-head"><h2>Complaint Resolution Trend</h2>
+      <div class="ctl"><label for="resGran" style="margin:0">View</label><select id="resGran" style="width:auto;min-height:36px"><option value="day">Daily</option><option value="week">Weekly</option><option value="month" selected>Monthly</option></select></div></div>
+      <p class="hint">Received, resolved, and still open at the end of each period.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+
+    <div class="card span2" id="c_scatter" data-views="dashboard quality analytics"><div class="card-head"><h2>Ash vs Moisture</h2>
+      <div class="ctl"><label for="scatterBy" style="margin:0">Colour by</label><select id="scatterBy" style="width:auto;min-height:36px"><option value="group">Complaint category</option><option value="sub">Subsidiary</option></select></div></div>
+      <p class="hint">Each point is one complaint with both values (tested value, else consumer-reported value).</p>
+      <div class="chart-box" style="height:340px"><canvas></canvas><div class="nodata">No complaints with both ash and moisture values</div></div></div>
+
+    <div class="card span2" id="c_qtrend" data-views="quality analytics"><div class="card-head"><h2>Quality Parameter Trend</h2>
+      <div class="ctl"><label for="qParam" style="margin:0">Parameter</label><select id="qParam" style="width:auto;min-height:36px"></select></div></div>
+      <p class="hint">Monthly averages. Solid line = Tested, dashed = Declared, dotted = Consumer reported. Only parameters with data are listed.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No measurement data for the current filters</div></div></div>
+
+    <div class="card" id="c_ash" data-views="quality analytics"><h2>Ash Analysis</h2><p class="hint">Number of complaints by ash % band: declared vs actual (tested, else reported).</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No ash data</div></div></div>
+    <div class="card" id="c_moist" data-views="quality analytics"><h2>Moisture Analysis</h2><p class="hint">Number of complaints by moisture % band: declared vs actual.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No moisture data</div></div></div>
+    <div class="card" id="c_gcv" data-views="quality analytics"><h2>GCV Analysis</h2><p class="hint">Number of complaints by GCV band (kcal/kg): declared vs actual.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No GCV data</div></div></div>
+    <div class="card" id="c_size" data-views="quality analytics"><h2>Size Analysis — Oversize Coal (<span class="thr">&gt;100</span> mm)</h2><p class="hint">Number of complaints by oversize %.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No oversize data</div></div></div>
+    <div class="card span2" id="c_shsa" data-views="quality analytics"><h2>Shale and Sandstone Analysis</h2><p class="hint">Average % (tested, else estimated) by subsidiary, for complaints that have a value.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No shale / sandstone data</div></div></div>
+
+    <div class="card" id="c_restime" data-views="analytics trend"><h2>Resolution Time</h2><p class="hint">Days from complaint date to resolution date, by subsidiary (resolved / closed complaints only).</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No resolved complaints</div></div></div>
+    <div class="card" id="c_geo" data-views="dashboard management analytics"><h2>Geographical Distribution (by State)</h2>
+      <p class="hint">A map with markers will be shown when the master data holds verified latitude / longitude. No coordinates are invented, so version 1 shows states.</p>
+      <div class="chart-box"><canvas></canvas><div class="nodata">No data for the current filters</div></div></div>
+  </section>
+
+  <section class="card" id="reportsCard" data-views="reports"><h2>Reports</h2>
+    <p class="hint">Every export contains only the complaints that match the current filters.</p>
+    <div class="filter-actions"><button class="btn primary" id="rpCsv">Export CSV</button><button class="btn" id="rpXls">Export Excel</button>
+      <button class="btn" id="rpPdf">Export PDF</button><button class="btn" id="rpPrint">Print Dashboard</button></div>
+    <p class="note" id="rpCount"></p></section>
+
+  <section class="card" id="searchCard" data-views="search"><h2>Complaint Search</h2>
+    <p class="hint">Searches complaint ID, consumer name, invoice, RR/challan number, mine, area, subsidiary and grade. It also narrows every other view.</p>
+    <input type="search" id="bigSearch" placeholder="Type to search…" aria-label="Search complaints"></section>
+
+  <section class="card" id="recentCard" data-views="dashboard"><div class="card-head"><h2>Live Recent Complaints</h2><a href="#live">View all →</a></div>
+    <div class="table-wrap" id="recentTable"></div></section>
+  <section class="card" id="listCard" data-views="live search reports"><h2 id="listTitle">Live Complaints</h2>
+    <div class="table-wrap" id="listTable"></div><div class="pager" id="pager"></div></section>
+
+  <p class="note">DEMO DATA — NOT OFFICIAL CIL COMPLAINT STATISTICS. Demo data is synthetic and is not official Coal India Limited complaint statistics.</p>
+</div>
+</main>
+
+<div class="modal-bg" id="detailBg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="card-head"><h2 id="detailTitle">Complaint Details</h2><button class="btn small" id="detailClose">Close ✕</button></div>
+  <div id="detailBody"></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" onerror="window.CHART_LOAD_FAILED=true"></script>
+<script src="config.js"></script>
+<script src="js/master-data.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/demo-generator.js"></script>
+<script src="js/data-layer.js"></script>
+<script src="js/integration.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
